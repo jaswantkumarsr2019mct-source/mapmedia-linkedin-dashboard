@@ -946,9 +946,9 @@ async function checkStatus() {
     }
 
     // Stats cards
-    const posted  = d.posted_posts  || 0;
-    const pending = d.pending_posts  || 0;
-    const total   = posted + pending;
+    const posted   = d.posted_posts  || 0;
+    const pending  = d.pending_posts  || 0;
+    const total    = posted + pending;
     document.getElementById('cntPosted').textContent  = posted;
     document.getElementById('cntPending').textContent = pending;
     document.getElementById('cntTotal').textContent   = total;
@@ -956,7 +956,7 @@ async function checkStatus() {
     document.getElementById('subPending').textContent = pending === 1 ? 'post queued' : 'posts queued';
 
     // Days left
-    const daysLeft = pending > 0 ? Math.ceil(pending * 1.5) : '—';
+    const daysLeft = pending > 0 ? pending : '—';
     document.getElementById('cntDaysLeft').textContent = daysLeft;
 
     // Campaign progress card
@@ -1350,11 +1350,11 @@ async function generateImagenCreative(day, topic, caption) {
   ];
 
   const prompt = prompts[Math.min(day - 1, prompts.length - 1)];
-  console.log('[Puter] Day', day, '— generating with FLUX.1-schnell...');
+  console.log('[Puter] Day', day, '— generating with FLUX.1-schnell-Free...');
 
-  // Use Puter.js — completely free, no API key, no credits, unlimited
+  // Use the free tier FLUX model on Puter
   const imgElement = await puter.ai.txt2img(prompt, {
-    model: 'black-forest-labs/FLUX.1-schnell'
+    model: 'black-forest-labs/FLUX.1-schnell-Free'
   });
 
   console.log('[Puter] ✅ Day', day, '— image received, extracting base64...');
