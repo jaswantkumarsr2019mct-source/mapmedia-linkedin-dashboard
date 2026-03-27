@@ -1218,13 +1218,36 @@ CRITICAL: Return ONLY a raw JSON object. No markdown. No backticks. No explanati
   log('⚡ Uploading 30 posts to scheduler...');
 
   // 4. Save to Supabase via Worker
+  // Strip image_data_url from payload — Worker patches images separately to avoid 1MB limit
+  const postsForSchedule = posts.map(p => ({
+    day:          p.day,
+    topic:        p.topic,
+    caption:      p.caption,
+    hashtags:     p.hashtags,
+    scheduled_at: p.scheduled_at
+    // intentionally no image_data_url here
+  }));
+
   try {
     const saveRes  = await fetch(WORKER + '/linkedin/schedule', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ posts })
+      body: JSON.stringify({ posts: postsForSchedule })
     });
     const saveData = await saveRes.json();
-    if (!saveData.success) throw new Error(JSON.stringify(saveData));
+    console.log('[Save] Schedule response:', saveData);
+    if (!saveData.success) throw new Error(saveData.error || JSON.stringify(saveData));
+
+    // Now patch images one by one via separate calls
+    log('🖼 Saving creatives...');
+    for (const p of posts) {
+      if (!p.image_data_url) continue;
+      try {
+        await fetch(WORKER + '/linkedin/update-post-image', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ day: p.day, image_data_url: p.image_data_url.slice(0, 800000) })
+        });
+      } catch(e) { console.warn('Image patch failed day', p.day, e.message); }
+    }
 
     setProgress(100, '🎉 All ' + posts.length + ' posts + creatives scheduled!');
     log('🎉 Done! Posts + creatives will auto-publish at optimal times.');
@@ -1404,9 +1427,9 @@ async function overlayWatermark(imageSrc, day, topic, caption) {
 
       // ── Logo area (top-left) — company logo if uploaded, else MapMedia AI text ──
       if (userLogoImg && userLogoImg.complete && userLogoImg.naturalWidth > 0) {
-        // Draw logo directly — no white background pill, just logo on the gradient
-        const logoMaxW = 160, logoMaxH = 56;
-        const lx = 48, ly = 48;
+        // Draw logo directly — bigger, no white background
+        const logoMaxW = 280, logoMaxH = 100;
+        const lx = 48, ly = 40;
         const ratio = Math.min(logoMaxW / userLogoImg.naturalWidth, logoMaxH / userLogoImg.naturalHeight);
         const lw    = userLogoImg.naturalWidth  * ratio;
         const lh    = userLogoImg.naturalHeight * ratio;
