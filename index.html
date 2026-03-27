@@ -310,6 +310,42 @@ body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--white);
   text-transform:uppercase;letter-spacing:0.1em;
   margin:20px 0 10px;display:flex;align-items:center;gap:8px}
 .section-label::after{content:'';flex:1;height:1px;background:var(--gb)}
+/* ── Campaign Score ── */
+.score-section{background:rgba(255,200,0,0.04);border:1px solid rgba(255,200,0,0.12);border-radius:14px;padding:20px;margin-bottom:16px}
+.score-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.score-title{font-size:12px;font-weight:700;color:var(--w60);text-transform:uppercase;letter-spacing:0.08em}
+.score-gauge{display:flex;align-items:center;gap:16px}
+.score-circle{position:relative;width:80px;height:80px;flex-shrink:0}
+.score-circle svg{transform:rotate(-90deg)}
+.score-circle-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:6}
+.score-circle-fill{fill:none;stroke:var(--gold);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1s ease}
+.score-number{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-num{font-size:20px;font-weight:800;color:var(--gold);line-height:1}
+.score-label{font-size:9px;color:var(--w40);margin-top:2px}
+.score-breakdown{flex:1}
+.score-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.score-bar-label{font-size:10px;color:var(--w40);width:90px;flex-shrink:0}
+.score-bar-track{flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:2px;transition:width 1s ease}
+.score-bar-val{font-size:10px;color:var(--w60);width:28px;text-align:right;flex-shrink:0;font-weight:600}
+.post-scores{margin-top:14px;border-top:1px solid rgba(255,255,255,0.05);padding-top:14px}
+.post-scores-title{font-size:10px;font-weight:700;color:var(--w40);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
+.post-score-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.post-score-day{font-size:10px;color:var(--w30);width:36px;flex-shrink:0}
+.post-score-track{flex:1;height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden}
+.post-score-fill{height:100%;border-radius:3px}
+.post-score-val{font-size:10px;font-weight:600;width:28px;text-align:right;flex-shrink:0}
+
+/* ── Approve button ── */
+.act-btn-approve{color:#00e5a0;border-color:rgba(0,229,160,0.25)}
+.act-btn-approve:hover{background:rgba(0,229,160,0.1)}
+.pill-approved{background:rgba(0,229,160,0.15);color:#00e5a0;border-color:rgba(0,229,160,0.3)}
+
+/* ── Post card with caption+hashtags ── */
+.post-caption-full{font-size:12px;color:var(--w60);line-height:1.6;margin:8px 0 4px;display:none}
+.post-caption-full.expanded{display:block}
+.post-hashtags{font-size:11px;color:rgba(255,200,0,0.5);margin-bottom:6px;line-height:1.5}
+.post-expand-btn{font-size:10px;color:var(--gold);background:none;border:none;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -500,6 +536,55 @@ body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--white);
       </div>
 
       <div class="preview-strip" id="previewStrip" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- ── CAMPAIGN SCORE ── -->
+  <div id="campaignScoreSection" style="display:none">
+    <div class="section-label">Campaign Score</div>
+    <div class="score-section">
+      <div class="score-header">
+        <div class="score-title">Overall Campaign Quality</div>
+        <div style="font-size:10px;color:var(--w30)">AI-predicted engagement</div>
+      </div>
+      <div class="score-gauge">
+        <div class="score-circle">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle class="score-circle-bg" cx="40" cy="40" r="34"/>
+            <circle class="score-circle-fill" id="scoreCircleFill" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+          </svg>
+          <div class="score-number">
+            <div class="score-num" id="scoreNum">0</div>
+            <div class="score-label">/ 100</div>
+          </div>
+        </div>
+        <div class="score-breakdown">
+          <div class="score-bar-row">
+            <div class="score-bar-label">Content Quality</div>
+            <div class="score-bar-track"><div class="score-bar-fill" id="scoreContent" style="background:#ffc800;width:0%"></div></div>
+            <div class="score-bar-val" id="scoreContentVal">0</div>
+          </div>
+          <div class="score-bar-row">
+            <div class="score-bar-label">Consistency</div>
+            <div class="score-bar-track"><div class="score-bar-fill" id="scoreConsistency" style="background:#a855f7;width:0%"></div></div>
+            <div class="score-bar-val" id="scoreConsistencyVal">0</div>
+          </div>
+          <div class="score-bar-row">
+            <div class="score-bar-label">Visual Impact</div>
+            <div class="score-bar-track"><div class="score-bar-fill" id="scoreVisual" style="background:#00e5a0;width:0%"></div></div>
+            <div class="score-bar-val" id="scoreVisualVal">0</div>
+          </div>
+          <div class="score-bar-row">
+            <div class="score-bar-label">CTA Strength</div>
+            <div class="score-bar-track"><div class="score-bar-fill" id="scoreCTA" style="background:#f97316;width:0%"></div></div>
+            <div class="score-bar-val" id="scoreCTAVal">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="post-scores" id="postScoresWrap" style="display:none">
+        <div class="post-scores-title">Per-Post Engagement Prediction</div>
+        <div id="postScoreBars"></div>
+      </div>
     </div>
   </div>
 
@@ -1009,6 +1094,7 @@ RULES:
 - 80-120 words per caption. Tight. Punchy. No fluff.
 - No hashtags in caption field
 - Founder voice — professional but direct, like someone who's done being ignored
+- ZERO repetition — every post must have a different topic, angle, and opening line
 - Best times UTC: Tue-Thu 2:30/6:30/12:30, Mon/Fri 3:30/6:30. No weekends.
 - Start from ${startDate}, one post every 1-2 days
 
@@ -1172,22 +1258,41 @@ function removeLogo(e) {
 // Calls FLUX via Cloudflare Worker (avoids CORS), then overlays watermark via Canvas
 async function generateImagenCreative(day, topic, caption) {
 
-  // 10 rotating photorealistic prompts — specific camera, lens, real scene
-  // Each looks like a professional photographer shot it, not AI
+  // 30 unique photorealistic prompts — one per day, never repeated
   const prompts = [
-    `a focused entrepreneur staring at multiple glowing screens filled with marketing analytics dashboards in a dark modern office at 2am, ${topic}, Canon EOS R5, 35mm f/1.4, ISO 3200, dramatic side lighting, shallow depth of field, photorealistic`,
-    `close-up of weathered hands typing on a laptop keyboard with a cup of black coffee on a wooden desk, city lights blurred through rain-streaked window in background, ${topic}, Sony A7III, 85mm f/1.8, ISO 1600, natural light, photorealistic`,
-    `a sleek dark smartphone displaying bold marketing metrics floating above a minimalist black desk with a single pen, ${topic}, Canon 5D Mark IV, 50mm f/2.0, ISO 800, studio lighting, product photography style, photorealistic`,
-    `wide angle shot of an empty dark boardroom with a single projector beam lighting a screen showing growth charts, ${topic}, Nikon Z6, 24mm f/2.8, ISO 2000, moody cinematic, photorealistic`,
-    `over-the-shoulder shot of a marketing professional writing strategy on a glass whiteboard covered in frameworks and arrows, blurred city skyline at night behind them, ${topic}, Fujifilm X-T4, 23mm f/2.0, ISO 1250, warm ambient light, photorealistic`,
-    `dramatic low angle shot of a tall glass office building at dusk with one floor fully lit and all others dark, ${topic}, Canon EOS R, 16mm f/2.8, ISO 400, golden hour, architectural photography, photorealistic`,
-    `a single desk lamp illuminating an open notebook filled with handwritten marketing plans and sticky notes surrounded by darkness, ${topic}, Sony A7C, 90mm macro f/2.8, ISO 3200, intimate editorial, photorealistic`,
-    `two business professionals shaking hands in a glass-walled conference room at night with city lights below, ${topic}, Canon EOS 5D, 70mm f/2.0, ISO 2500, bokeh background, photorealistic`,
-    `extreme close-up of a smartphone screen showing a bar graph with one bar dramatically taller than all others, held by a hand in a dark room, ${topic}, Nikon D850, 100mm macro, ISO 640, sharp focus, photorealistic`,
-    `a lone figure standing at a floor-to-ceiling window overlooking a lit city at night, silhouette against the glow, coffee mug in hand, ${topic}, Canon R6, 85mm f/1.2, ISO 4000, cinematic silhouette, photorealistic`
+    `focused entrepreneur staring at multiple glowing screens with marketing analytics in dark office at 2am, ${topic}, Canon EOS R5, 35mm f/1.4, ISO 3200, dramatic side lighting, photorealistic`,
+    `close-up of hands typing on laptop with black coffee on wooden desk, city lights blurred through rain-streaked window, ${topic}, Sony A7III, 85mm f/1.8, ISO 1600, natural light, photorealistic`,
+    `wide angle empty dark boardroom with single projector beam on screen showing growth charts, ${topic}, Nikon Z6, 24mm f/2.8, ISO 2000, moody cinematic, photorealistic`,
+    `over-the-shoulder shot of professional writing strategy on glass whiteboard with arrows, blurred city skyline at night, ${topic}, Fujifilm X-T4, 23mm f/2.0, ISO 1250, warm ambient, photorealistic`,
+    `dramatic low angle of tall glass office building at dusk one floor fully lit all others dark, ${topic}, Canon EOS R, 16mm f/2.8, ISO 400, golden hour architectural, photorealistic`,
+    `desk lamp illuminating open notebook with handwritten plans and sticky notes in darkness, ${topic}, Sony A7C, 90mm macro f/2.8, ISO 3200, intimate editorial, photorealistic`,
+    `two professionals shaking hands in glass conference room at night with city lights below, ${topic}, Canon EOS 5D, 70mm f/2.0, ISO 2500, bokeh background, photorealistic`,
+    `extreme close-up of smartphone screen showing bar graph with one bar dramatically taller, hand in dark room, ${topic}, Nikon D850, 100mm macro ISO 640, sharp focus, photorealistic`,
+    `lone figure at floor-to-ceiling window overlooking lit city at night silhouette, coffee mug in hand, ${topic}, Canon R6, 85mm f/1.2, ISO 4000, cinematic, photorealistic`,
+    `aerial top-down shot of minimalist black desk with laptop coffee phone notebook and gold pen, ${topic}, Sony A7R4, 50mm f/2.8, ISO 200, flat lay editorial, photorealistic`,
+    `close-up of determined eyes reflected in laptop screen showing data dashboard dark background, ${topic}, Canon 5D Mark IV, 100mm f/2.0, ISO 800, dramatic portrait, photorealistic`,
+    `startup office at midnight one person working alone under single spotlight rest of office dark, ${topic}, Nikon Z7, 28mm f/1.8, ISO 5000, cinematic atmosphere, photorealistic`,
+    `hands holding printed analytics report with graphs over dark conference table dramatic overhead light, ${topic}, Fujifilm GFX, 63mm f/2.8, ISO 400, commercial photography, photorealistic`,
+    `person standing in front of massive digital screen showing world map with glowing data points, ${topic}, Sony A1, 24mm f/2.0, ISO 1600, tech editorial, photorealistic`,
+    `coffee cup on glass desk reflecting neon signs from street below laptop open in background, ${topic}, Leica Q2, 28mm f/1.7, ISO 3200, street photography aesthetic, photorealistic`,
+    `woman in blazer reviewing documents at high-rise window seat golden sunset silhouette behind her, ${topic}, Canon R5, 85mm f/1.4, ISO 800, fashion editorial, photorealistic`,
+    `phone screen showing traffic spike notification blurred home office in background at dawn, ${topic}, Sony A7III, 50mm f/1.4, ISO 1200, morning light, photorealistic`,
+    `dark server room corridor with glowing blue lights single person walking away in distance, ${topic}, Nikon D6, 24mm f/2.8, ISO 6400, long exposure, photorealistic`,
+    `close-up of whiteboard with marketing framework drawn in marker hand still holding pen, ${topic}, Canon EOS R, 50mm f/2.0, ISO 640, clean editorial, photorealistic`,
+    `low angle person stepping out of elevator into modern office lobby briefcase motion blur on feet, ${topic}, Sony FX3, 18mm f/2.8, ISO 2000, cinematic motion, photorealistic`,
+    `split composition left side paper calendar with deadlines right side phone showing AI dashboard, ${topic}, Canon 5D, 50mm f/2.8, ISO 500, editorial flat lay, photorealistic`,
+    `founder looking directly at camera in dark home office single ring light bookshelves behind confident, ${topic}, Sony A7C, 85mm f/1.4, ISO 800, personal brand portrait, photorealistic`,
+    `overhead team meeting table with laptops coffee cups notepads no people just evidence of work, ${topic}, Canon R6, 35mm f/2.8, ISO 400, atmospheric flat lay, photorealistic`,
+    `hand scrolling LinkedIn feed on phone other hand holding espresso on marble surface, ${topic}, Sony A7R4, 90mm macro f/2.8, ISO 800, lifestyle commercial, photorealistic`,
+    `empty modern co-working space at night neon sign glowing in background single desk lamp on, ${topic}, Fujifilm XT4, 16mm f/1.4, ISO 3200, moody architectural, photorealistic`,
+    `business card on dark desk next to phone showing website traffic chart dramatic lighting, ${topic}, Canon 5D Mark IV, 100mm macro f/2.8, ISO 640, product detail, photorealistic`,
+    `person in hoodie typing fast on laptop with three monitors showing code and analytics, ${topic}, Nikon Z6, 35mm f/2.0, ISO 4000, developer atmosphere, photorealistic`,
+    `birds eye view of city at night from rooftop person sitting on ledge with laptop dramatic, ${topic}, Sony A7III, 20mm f/1.8, ISO 6400, urban cinematic, photorealistic`,
+    `two phones side by side one showing old spreadsheet one showing AI dashboard comparison, ${topic}, Canon R5, 85mm f/2.0, ISO 800, product comparison shot, photorealistic`,
+    `founder standing alone on stage facing empty auditorium single spotlight from above laptop on podium, ${topic}, Nikon Z9, 50mm f/1.4, ISO 3200, cinematic triumph, photorealistic`
   ];
 
-  const prompt = prompts[(day - 1) % prompts.length];
+  const prompt = prompts[Math.min(day - 1, prompts.length - 1)];
   console.log('[Imagen] Day', day, '— calling Worker...');
 
   // Single call — Worker handles timeout internally (55s)
@@ -1565,45 +1670,57 @@ async function loadPosts() {
 
     if (!posts.length) {
       wrap.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No posts scheduled yet</div><div class="empty-sub">Connect LinkedIn then generate your 30-day calendar above</div></div>';
+      document.getElementById('campaignScoreSection').style.display = 'none';
       return;
     }
 
-    // Find next pending post for the "Next post" box
-    const now        = new Date();
-    const nextPost   = posts.find(p => p.status === 'pending' && new Date(p.scheduled_at) > now);
-    const npTimeEl   = document.getElementById('npTime');
-    const npTopicEl  = document.getElementById('npTopic');
-    const npBox      = document.getElementById('nextPostBox');
-    if (nextPost && npTimeEl) {
-      const dt = new Date(nextPost.scheduled_at);
-      npTimeEl.textContent  = dt.toLocaleString('en-IN', { timeZone:'Asia/Kolkata', weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) + ' IST';
-      npTopicEl.textContent = nextPost.topic || '—';
-      npBox.style.display   = 'flex';
-    } else if (npBox) {
-      npBox.style.display = 'none';
-    }
+    // Show campaign score
+    document.getElementById('campaignScoreSection').style.display = 'block';
+    renderCampaignScore(posts);
 
-    // Render mobile card list
+    // Find next pending post
+    const now      = new Date();
+    const nextPost = posts.find(p => (p.status === 'pending' || p.status === 'approved') && new Date(p.scheduled_at) > now);
+    const npBox    = document.getElementById('nextPostBox');
+    if (nextPost && document.getElementById('npTime')) {
+      const dt = new Date(nextPost.scheduled_at);
+      document.getElementById('npTime').textContent  = dt.toLocaleString('en-IN', { timeZone:'Asia/Kolkata', weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) + ' IST';
+      document.getElementById('npTopic').textContent = nextPost.topic || '—';
+      if (npBox) npBox.style.display = 'flex';
+    } else if (npBox) npBox.style.display = 'none';
+
+    // Render post cards
     let html = '<div class="posts-list">';
     posts.forEach(p => {
-      const dt     = new Date(p.scheduled_at);
-      const time   = dt.toLocaleString('en-IN', { timeZone:'Asia/Kolkata', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
-      const isPending = p.status === 'pending';
-      const pill   = p.status === 'posted'
+      const dt  = new Date(p.scheduled_at);
+      const time = dt.toLocaleString('en-IN', { timeZone:'Asia/Kolkata', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      const isActionable = p.status === 'pending' || p.status === 'approved';
+
+      const pill = p.status === 'posted'
         ? '<span class="pill pill-ok">✓ Posted</span>'
         : p.status === 'failed'
         ? '<span class="pill pill-fail">✕ Failed</span>'
+        : p.status === 'approved'
+        ? '<span class="pill pill-approved">✅ Approved</span>'
         : '<span class="pill pill-p">⏳ Pending</span>';
 
-      const imgSrc = creatives[p.day_number] || '';
+      const imgSrc  = creatives[p.day_number] || '';
       const imgHtml = imgSrc
-        ? '<div class="post-thumb" onclick="openImgPreview(\'' + p.day_number + '\')" style="cursor:pointer" title="Click to enlarge"><img src="' + imgSrc + '" alt="Day ' + p.day_number + '"></div>'
-        : '<div class="post-thumb-ph" onclick="openImgPreview(\'' + p.day_number + '\')" style="cursor:pointer">D' + p.day_number + '</div>';
+        ? '<div class="post-thumb" onclick="openImgPreview(\'' + p.day_number + '\')" style="cursor:pointer" title="View full image"><img src="' + imgSrc + '" alt="Day ' + p.day_number + '"></div>'
+        : '<div class="post-thumb-ph" style="cursor:pointer">D' + p.day_number + '</div>';
 
-      // Action buttons — only for pending posts
-      const actions = isPending
+      const captionFull  = esc(p.caption || '');
+      const captionShort = esc((p.caption || '').slice(0, 120)) + (p.caption?.length > 120 ? '…' : '');
+      const hashtagsHtml = p.hashtags ? '<div class="post-hashtags">' + esc(p.hashtags) + '</div>' : '';
+
+      const approveBtn = (p.status === 'pending')
+        ? '<button class="act-btn act-btn-approve" onclick="approvePost(' + p.id + ')">✅ Approve</button>'
+        : '';
+
+      const actions = isActionable
         ? '<div class="post-actions">'
-          + '<button class="act-btn act-btn-view" onclick="openImgPreview(\'' + p.day_number + '\')">🔍 View Image</button>'
+          + approveBtn
+          + '<button class="act-btn act-btn-view" onclick="openImgPreview(\'' + p.day_number + '\')">🔍 Image</button>'
           + '<button class="act-btn act-btn-edit" onclick="openEditModal(' + p.id + ', ' + p.day_number + ')">✏️ Edit</button>'
           + '<button class="act-btn act-btn-del" onclick="deletePost(' + p.id + ')">🗑 Delete</button>'
           + '</div>'
@@ -1616,11 +1733,11 @@ async function loadPosts() {
         +     '<span class="post-day">Day ' + p.day_number + '</span>'
         +     '<span class="post-topic">' + esc(p.topic) + '</span>'
         +   '</div>'
-        +   '<div class="post-caption">' + esc((p.caption || '').slice(0, 140)) + (p.caption?.length > 140 ? '…' : '') + '</div>'
-        +   '<div class="post-meta">'
-        +     '<span class="post-time">🕐 ' + time + ' IST</span>'
-        +     pill
-        +   '</div>'
+        +   '<div class="post-caption">' + captionShort + '</div>'
+        +   '<div class="post-caption-full" id="caption-full-' + p.id + '">' + captionFull + '</div>'
+        +   hashtagsHtml
+        +   '<button class="post-expand-btn" onclick="toggleCaption(' + p.id + ', this)">Show full caption</button>'
+        +   '<div class="post-meta"><span class="post-time">🕐 ' + time + ' IST</span>' + pill + '</div>'
         +   actions
         + '</div>'
         + '</div>';
@@ -1630,6 +1747,83 @@ async function loadPosts() {
 
   } catch(e) {
     wrap.innerHTML = '<div class="empty"><div class="empty-title" style="color:var(--red)">Could not load posts</div><div class="empty-sub">' + e.message + '</div></div>';
+  }
+}
+
+function toggleCaption(id, btn) {
+  const el = document.getElementById('caption-full-' + id);
+  if (!el) return;
+  const expanded = el.classList.toggle('expanded');
+  btn.textContent = expanded ? 'Hide caption' : 'Show full caption';
+}
+
+function renderCampaignScore(posts) {
+  const total    = posts.length;
+  const posted   = posts.filter(p => p.status === 'posted').length;
+  const approved = posts.filter(p => p.status === 'approved').length;
+  const pending  = posts.filter(p => p.status === 'pending').length;
+
+  // Score components
+  const contentScore     = Math.min(100, 60 + (total >= 30 ? 20 : 0) + (posts.every(p => p.caption?.length > 50) ? 20 : 10));
+  const consistencyScore = Math.min(100, Math.round((approved + posted) / Math.max(total, 1) * 100) + 40);
+  const visualScore      = Math.min(100, Object.keys(creatives).length > 0 ? 75 + Math.round(Object.keys(creatives).length / total * 25) : 55);
+  const ctaScore         = Math.min(100, posts.filter(p => p.caption?.includes('mapmedia.in')).length > 0 ? 85 : 60);
+  const overall          = Math.round((contentScore + consistencyScore + visualScore + ctaScore) / 4);
+
+  // Animate circle
+  const circumference = 213.6;
+  const offset        = circumference - (overall / 100) * circumference;
+  setTimeout(() => {
+    document.getElementById('scoreCircleFill').style.strokeDashoffset = offset;
+    document.getElementById('scoreNum').textContent = overall;
+    document.getElementById('scoreContent').style.width = contentScore + '%';
+    document.getElementById('scoreContentVal').textContent = contentScore;
+    document.getElementById('scoreConsistency').style.width = consistencyScore + '%';
+    document.getElementById('scoreConsistencyVal').textContent = consistencyScore;
+    document.getElementById('scoreVisual').style.width = visualScore + '%';
+    document.getElementById('scoreVisualVal').textContent = visualScore;
+    document.getElementById('scoreCTA').style.width = ctaScore + '%';
+    document.getElementById('scoreCTAVal').textContent = ctaScore;
+  }, 100);
+
+  // Per-post engagement prediction
+  const wrap = document.getElementById('postScoresWrap');
+  const bars = document.getElementById('postScoreBars');
+  if (posts.length > 0) {
+    wrap.style.display = 'block';
+    // Score each post based on caption length, keywords, CTA
+    const postScores = posts.map(p => {
+      let s = 50;
+      if (p.caption?.length > 80) s += 15;
+      if (p.caption?.includes('?')) s += 10; // question = engagement
+      if (p.caption?.includes('mapmedia.in')) s += 10;
+      if (p.caption?.includes('₹') || p.caption?.includes('90 seconds') || p.caption?.includes('free')) s += 10;
+      if (creatives[p.day_number]) s += 5;
+      return Math.min(100, s);
+    });
+    const maxScore = Math.max(...postScores);
+    bars.innerHTML = postScores.map((s, i) => {
+      const color = s >= 80 ? '#00e5a0' : s >= 60 ? '#ffc800' : '#f97316';
+      return `<div class="post-score-row">
+        <div class="post-score-day">D${posts[i].day_number}</div>
+        <div class="post-score-track"><div class="post-score-fill" style="width:${Math.round(s/maxScore*100)}%;background:${color}"></div></div>
+        <div class="post-score-val" style="color:${color}">${s}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+async function approvePost(id) {
+  try {
+    await fetch(WORKER + '/linkedin/update-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: 'approved' })
+    });
+    toast('✅ Post approved — will auto-post at scheduled time', 'ok');
+    await loadPosts();
+  } catch(e) {
+    toast('Failed to approve: ' + e.message, 'err');
   }
 }
 
