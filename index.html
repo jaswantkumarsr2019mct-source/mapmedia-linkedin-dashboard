@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>MapMedia AI — LinkedIn Scheduler</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://js.puter.com/v2/"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -526,7 +527,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--white);
       <div class="prog-wrap" id="progWrap">
         <div class="prog-header">
           <span id="progLabel">Starting...</span>
-          <span id="progPct">0%</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="progPct">0%</span>
+            <button id="stopBtn" onclick="stopGeneration()" style="display:none;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);color:var(--red);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">⏹ Stop</button>
+          </div>
         </div>
         <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
@@ -1033,6 +1037,17 @@ function safeParsePostsJSON(raw) {
   }
 }
 
+// ── ABORT FLAG ──
+let generationAborted = false;
+
+function stopGeneration() {
+  generationAborted = true;
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('stopBtn').textContent = '⏹ Stopping...';
+  log('⏹ Stopping after current image...');
+  toast('Stopping generation — saving what\'s done so far', 'ok');
+}
+
 // ── GENERATE ──
 async function generate() {
   const business   = document.getElementById('iBusiness').value.trim();
@@ -1042,10 +1057,12 @@ async function generate() {
   const userPrompt = promptEl?.value?.trim() || '';
   if (!business || !website) { toast('Fill in Business and Website', 'err'); return; }
 
+  generationAborted = false;
   const btn = document.getElementById('genBtn');
   btn.disabled = true; btn.textContent = '⚡ Generating...';
   document.getElementById('progWrap').style.display = 'block';
   document.getElementById('previewStrip').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'inline-block';
   setProgress(5, 'Scanning ' + website + '...');
   log('⚡ Scanning website...');
 
@@ -1150,6 +1167,13 @@ CRITICAL: Return ONLY a raw JSON object. No markdown. No backticks. No explanati
 
   // Generate sequentially — correct day order, no race conditions
   for (let i = 0; i < posts.length; i++) {
+    // Check if user stopped
+    if (generationAborted) {
+      log('⏹ Generation stopped at Day ' + posts[i].day + ' — saving what\'s done');
+      setProgress(60 + Math.round(i / posts.length * 30), '⏹ Stopped at Day ' + posts[i].day);
+      break;
+    }
+
     const p = posts[i];
     setProgress(
       60 + Math.round((i + 1) / posts.length * 30),
@@ -1162,9 +1186,17 @@ CRITICAL: Return ONLY a raw JSON object. No markdown. No backticks. No explanati
       img = await generateImagenCreative(p.day, p.topic, p.caption);
       log('✅ Day ' + p.day + ' creative ready');
     } catch(e) {
-      console.warn('Image failed day', p.day, ':', e.message);
-      log('⚠ Day ' + p.day + ' — using branded template');
-      img = drawCreative(p.day, p.topic, p.caption, false);
+      console.warn('Image failed day', p.day, ':', e.message, '— retrying in 5s...');
+      log('⏳ Day ' + p.day + ' — retrying image...');
+      await new Promise(r => setTimeout(r, 5000));
+      try {
+        img = await generateImagenCreative(p.day, p.topic, p.caption);
+        log('✅ Day ' + p.day + ' creative ready (retry)');
+      } catch(e2) {
+        console.warn('Image retry failed day', p.day, ':', e2.message, '— using template');
+        log('⚠ Day ' + p.day + ' — using branded template');
+        img = drawCreative(p.day, p.topic, p.caption, false);
+      }
     }
     creatives[p.day]        = img;
     posts[i].image_data_url = img;
@@ -1205,6 +1237,8 @@ CRITICAL: Return ONLY a raw JSON object. No markdown. No backticks. No explanati
 
   btn.disabled = false;
   btn.textContent = '⚡ Generate Calendar + Creatives';
+  document.getElementById('stopBtn').style.display = 'none';
+  generationAborted = false;
 }
 
 // ── LOGO HANDLING ──
@@ -1293,31 +1327,40 @@ async function generateImagenCreative(day, topic, caption) {
   ];
 
   const prompt = prompts[Math.min(day - 1, prompts.length - 1)];
-  console.log('[Imagen] Day', day, '— calling Worker...');
+  console.log('[Puter] Day', day, '— generating with FLUX.1-schnell...');
 
-  // Single call — Worker handles timeout internally (55s)
-  try {
-    const res = await fetch(WORKER + '/linkedin/generate-image', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ prompt })
-    });
+  // Use Puter.js — completely free, no API key, no credits, unlimited
+  const imgElement = await puter.ai.txt2img(prompt, {
+    model: 'black-forest-labs/FLUX.1-schnell'
+  });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'HTTP ' + res.status }));
-      throw new Error(err.error || 'Worker returned ' + res.status);
+  console.log('[Puter] ✅ Day', day, '— image received, extracting base64...');
+
+  // Convert the returned <img> element to base64 via Canvas
+  return new Promise((resolve, reject) => {
+    // Puter returns an img element — wait for it to fully load
+    const processImg = () => {
+      try {
+        const cvs = document.createElement('canvas');
+        cvs.width  = imgElement.naturalWidth  || imgElement.width  || 1024;
+        cvs.height = imgElement.naturalHeight || imgElement.height || 1024;
+        const ctx  = cvs.getContext('2d');
+        ctx.drawImage(imgElement, 0, 0, cvs.width, cvs.height);
+        const dataUrl = cvs.toDataURL('image/jpeg', 0.92);
+        console.log('[Puter] ✅ Day', day, 'base64 extracted, overlaying watermark...');
+        overlayWatermark(dataUrl, day, topic, caption).then(resolve).catch(reject);
+      } catch(e) {
+        reject(new Error('Canvas extraction failed: ' + e.message));
+      }
+    };
+
+    if (imgElement.complete && imgElement.naturalWidth > 0) {
+      processImg();
+    } else {
+      imgElement.onload  = processImg;
+      imgElement.onerror = () => reject(new Error('Puter image failed to load'));
     }
-
-    const data = await res.json();
-    if (!data.image) throw new Error('No image in Worker response');
-
-    console.log('[Imagen] ✅ Day', day, '— image received');
-    const mime = data.contentType || 'image/jpeg';
-    return await overlayWatermark('data:' + mime + ';base64,' + data.image, day, topic, caption);
-
-  } catch(e) {
-    throw new Error('Image failed day ' + day + ': ' + e.message);
-  }
+  });
 }
 
 // ── WATERMARK OVERLAY ──
